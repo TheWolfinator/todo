@@ -1,5 +1,6 @@
 ﻿using Todo_App.Application.Common.Mappings;
 using Todo_App.Domain.Entities;
+using Todo_App.Domain.ValueObjects;
 
 namespace Todo_App.Application.TodoItems.Queries.GetTodoItemsWithPagination;
 
@@ -10,6 +11,8 @@ public class TodoItemBriefDto : IMapFrom<TodoItem>
     public int ListId { get; set; }
 
     public string? Title { get; set; }
+
+    public Colour Colour { get; set; } = Colour.White;
 
     public bool Done { get; set; }
 }

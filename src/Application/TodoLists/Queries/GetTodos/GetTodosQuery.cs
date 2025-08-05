@@ -1,9 +1,11 @@
-﻿using AutoMapper;
+﻿using System.Reflection;
+using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Todo_App.Application.Common.Interfaces;
 using Todo_App.Domain.Enums;
+using Todo_App.Domain.ValueObjects;
 
 namespace Todo_App.Application.TodoLists.Queries.GetTodos;
 
@@ -33,7 +35,24 @@ public class GetTodosQueryHandler : IRequestHandler<GetTodosQuery, TodosVm>
                 .AsNoTracking()
                 .ProjectTo<TodoListDto>(_mapper.ConfigurationProvider)
                 .OrderBy(t => t.Title)
-                .ToListAsync(cancellationToken)
+                .ToListAsync(cancellationToken),
+
+            SupportedColours = GetSupportedColours(),
         };
+    }
+
+    private List<SupportedColourDto> GetSupportedColours()
+    {
+        var colour = Colour.Instance;
+        List<PropertyInfo> list = new List<PropertyInfo>();
+        foreach (var property in typeof(Colour).GetProperties()) list.Add(property);
+        var supportedColours = list
+            .Select(prop => new SupportedColourDto()
+            {
+                Hex = prop.GetValue(colour)?.ToString() ?? string.Empty,
+                Name = prop.Name
+            })
+            .ToList();
+        return supportedColours;
     }
 }
