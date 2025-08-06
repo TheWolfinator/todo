@@ -3,6 +3,7 @@ using Duende.IdentityServer.EntityFramework.Options;
 using MediatR;
 using Microsoft.AspNetCore.ApiAuthorization.IdentityServer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Options;
 using Todo_App.Application.Common.Interfaces;
 using Todo_App.Domain.Entities;
@@ -30,6 +31,8 @@ public class ApplicationDbContext : ApiAuthorizationDbContext<ApplicationUser>, 
     public DbSet<TodoList> TodoLists => Set<TodoList>();
 
     public DbSet<TodoItem> TodoItems => Set<TodoItem>();
+
+    public DbSet<Tag> Tags => Set<Tag>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

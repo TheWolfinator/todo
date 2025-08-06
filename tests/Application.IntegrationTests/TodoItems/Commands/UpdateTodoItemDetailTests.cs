@@ -1,4 +1,5 @@
-﻿using FluentAssertions;
+using System.Linq.Expressions;
+using FluentAssertions;
 using NUnit.Framework;
 using Todo_App.Application.Common.Exceptions;
 using Todo_App.Application.TodoItems.Commands.CreateTodoItem;
@@ -89,6 +90,45 @@ public class UpdateTodoItemDetailTests : BaseTestFixture
         item.Should().NotBeNull();
         item!.Colour.Should().NotBeNull();
         item.Colour.Should().Be(Colour.Red);
+    }
+
+    public async Task ShouldUpdateTags()
+    {
+        var userId = await RunAsDefaultUserAsync();
+
+        var listId = await SendAsync(new CreateTodoListCommand
+        {
+            Title = "New List"
+        });
+
+        var itemId = await SendAsync(new CreateTodoItemCommand
+        {
+            ListId = listId,
+            Title = "New Item"
+        });
+
+        var command = new UpdateTodoItemDetailCommand
+        {
+            Id = itemId,
+            ListId = listId,
+            Note = "A1",
+            Priority = PriorityLevel.High,
+            Tags = new List<Tag>{new() { Name = "tag1"}}
+        };
+
+        await SendAsync(command);
+
+        var item = await FindAsync<TodoItem>(
+            new object[] { itemId },
+            new Expression<Func<TodoItem, object>>[]
+            {
+                i => i.Tags,
+            }
+        );
+
+        item.Should().NotBeNull();
+        item!.Tags.Count.Should().Be(1);
+        item.Tags.First().Name.Should().Be("tag1");
     }
 
 }
