@@ -1001,6 +1001,7 @@ export class TodoItem extends BaseAuditableEntity implements ITodoItem {
     done?: boolean;
     list?: TodoList;
     tags?: Tag[];
+    isDeleted?: boolean;
 
     constructor(data?: ITodoItem) {
         super(data);
@@ -1022,6 +1023,7 @@ export class TodoItem extends BaseAuditableEntity implements ITodoItem {
                 for (let item of _data["tags"])
                     this.tags!.push(Tag.fromJS(item));
             }
+            this.isDeleted = _data["isDeleted"];
         }
     }
 
@@ -1047,6 +1049,7 @@ export class TodoItem extends BaseAuditableEntity implements ITodoItem {
             for (let item of this.tags)
                 data["tags"].push(item.toJSON());
         }
+        data["isDeleted"] = this.isDeleted;
         super.toJSON(data);
         return data;
     }
@@ -1062,12 +1065,14 @@ export interface ITodoItem extends IBaseAuditableEntity {
     done?: boolean;
     list?: TodoList;
     tags?: Tag[];
+    isDeleted?: boolean;
 }
 
 export class TodoList extends BaseAuditableEntity implements ITodoList {
     title?: string | undefined;
     colour?: Colour;
     items?: TodoItem[];
+    isDeleted?: boolean;
 
     constructor(data?: ITodoList) {
         super(data);
@@ -1083,6 +1088,7 @@ export class TodoList extends BaseAuditableEntity implements ITodoList {
                 for (let item of _data["items"])
                     this.items!.push(TodoItem.fromJS(item));
             }
+            this.isDeleted = _data["isDeleted"];
         }
     }
 
@@ -1102,6 +1108,7 @@ export class TodoList extends BaseAuditableEntity implements ITodoList {
             for (let item of this.items)
                 data["items"].push(item.toJSON());
         }
+        data["isDeleted"] = this.isDeleted;
         super.toJSON(data);
         return data;
     }
@@ -1111,6 +1118,7 @@ export interface ITodoList extends IBaseAuditableEntity {
     title?: string | undefined;
     colour?: Colour;
     items?: TodoItem[];
+    isDeleted?: boolean;
 }
 
 export abstract class BaseEvent implements IBaseEvent {
