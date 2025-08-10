@@ -9,7 +9,12 @@ using Todo_App.Domain.ValueObjects;
 
 namespace Todo_App.Application.TodoLists.Queries.GetTodos;
 
-public record GetTodosQuery : IRequest<TodosVm>;
+public record GetTodosQuery : IRequest<TodosVm>
+{
+    public int? ListId { get; init; } = null;
+    public int[] TagIds { get; init; } = Array.Empty<int>();
+    public string Title { get; set; }
+}
 
 public class GetTodosQueryHandler : IRequestHandler<GetTodosQuery, TodosVm>
 {
@@ -24,6 +29,7 @@ public class GetTodosQueryHandler : IRequestHandler<GetTodosQuery, TodosVm>
 
     public async Task<TodosVm> Handle(GetTodosQuery request, CancellationToken cancellationToken)
     {
+
         return new TodosVm
         {
             PriorityLevels = Enum.GetValues(typeof(PriorityLevel))

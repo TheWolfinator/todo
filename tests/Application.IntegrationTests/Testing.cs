@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using System.Linq.Expressions;
+using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -107,6 +108,52 @@ public partial class Testing
 
         return await context.FindAsync<TEntity>(keyValues);
     }
+
+    public static async Task<TEntity?> FindAsync<TEntity>(
+        object[] keyValues,
+        Expression<Func<TEntity, object>>[] includes)
+        where TEntity : class
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        IQueryable<TEntity> query = context.Set<TEntity>();
+
+        // Apply includes
+        foreach (var include in includes)
+        {
+            query = query.Include(include);
+        }
+
+        // Handle composite keys
+        var entityType = context.Model.FindEntityType(typeof(TEntity))
+                         ?? throw new InvalidOperationException($"Entity type {typeof(TEntity).Name} not found.");
+
+        var keyProperties = entityType.FindPrimaryKey()?.Properties
+                            ?? throw new InvalidOperationException($"Primary key for {typeof(TEntity).Name} not found.");
+
+        if (keyValues.Length != keyProperties.Count)
+        {
+            throw new ArgumentException($"Incorrect number of key values provided for {typeof(TEntity).Name}.");
+        }
+
+        // Build predicate: e => e.Key1 == keyValues[0] && ...
+        var parameter = Expression.Parameter(typeof(TEntity), "e");
+        Expression? predicate = null;
+
+        for (int i = 0; i < keyProperties.Count; i++)
+        {
+            var property = Expression.Property(parameter, keyProperties[i].Name);
+            var value = Expression.Constant(keyValues[i]);
+            var equals = Expression.Equal(property, value);
+            predicate = predicate == null ? equals : Expression.AndAlso(predicate, equals);
+        }
+
+        var lambda = Expression.Lambda<Func<TEntity, bool>>(predicate!, parameter);
+
+        return await query.FirstOrDefaultAsync(lambda);
+    }
+
 
     public static async Task AddAsync<TEntity>(TEntity entity)
         where TEntity : class

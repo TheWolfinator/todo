@@ -3,7 +3,7 @@ import { FormBuilder } from '@angular/forms';
 import { BsModalService, BsModalRef } from 'ngx-bootstrap/modal';
 import {
   TodoListsClient, TodoItemsClient,
-  TodoListDto, TodoItemDto, PriorityLevelDto,
+  TodoListDto, TodoItemDto, PriorityLevelDto, TagDto,
   CreateTodoListCommand, UpdateTodoListCommand,
   CreateTodoItemCommand, UpdateTodoItemDetailCommand, SupportedColourDto
 } from '../web-api-client';
@@ -29,12 +29,15 @@ export class TodoComponent implements OnInit {
   deleteListModalRef: BsModalRef;
   itemDetailsModalRef: BsModalRef;
   supportedColours: SupportedColourDto[];
+  selectedTags: TagDto[] = [];
+  tagSuggestions: TagDto[] = [];
   itemDetailsFormGroup = this.fb.group({
     id: [null],
     listId: [null],
     priority: [''],
     note: [''],
     colour: [''],
+    tags: [[]]
   });
 
 
@@ -42,7 +45,7 @@ export class TodoComponent implements OnInit {
     private listsClient: TodoListsClient,
     private itemsClient: TodoItemsClient,
     private modalService: BsModalService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
   ) { }
 
   ngOnInit(): void {
@@ -51,12 +54,40 @@ export class TodoComponent implements OnInit {
         this.lists = result.lists;
         this.priorityLevels = result.priorityLevels;
         this.supportedColours = result.supportedColours;
+
+        this.tagSuggestions = Array.from(
+          new Map(
+            result.lists
+              .reduce((allLists, list) => allLists.concat(
+                list.items.reduce((allItems, item) => allItems.concat(item.tags), [])
+              ), [])
+              .map(tag => [tag.name.toLowerCase(), tag])
+          ).values()
+        );
+
         if (this.lists.length) {
-          this.selectedList = this.lists[0];
+          const storedId = localStorage.getItem('selectedListId');
+
+          if (storedId) {
+            // Try to find the stored list
+            this.selectedList = this.lists.find(l => l.id === +storedId) || null;
+          }
+
+          // If still null, default to first list
+          if (!this.selectedList) {
+            this.selectedList = this.lists[0];
+            localStorage.setItem('selectedListId', this.selectedList.id.toString());
+          }
         }
       },
       error => console.error(error)
     );
+  }
+
+  selectList(list: any): void {
+    if (!list) return; // Safety check
+    this.selectedList = list;
+    localStorage.setItem('selectedListId', list.id.toString());
   }
 
   // Lists
@@ -167,6 +198,7 @@ export class TodoComponent implements OnInit {
         this.selectedItem.priority = item.priority;
         this.selectedItem.note = item.note;
         this.selectedItem.colour = item.colour;
+        this.selectedItem.tags = item.tags;
         this.itemDetailsModalRef.hide();
         this.itemDetailsFormGroup.reset();
       },
@@ -260,9 +292,57 @@ export class TodoComponent implements OnInit {
     }
   }
 
+  filterChanged(event: { tags: string[]; title: string }) {
+    const listId = Number(localStorage.getItem('selectedListId'));
+
+    this.itemsClient.getTodoItemsWithPagination(
+      listId,
+      1,
+      10,
+      event.tags ?? [],
+      event.title ?? ''
+    ).subscribe({
+      next: result => {
+        const listIndex = this.lists.findIndex(l => l.id === listId);
+        if (listIndex !== -1) {
+          const todoItems: TodoItemDto[] = result.items.map(item =>
+            new TodoItemDto({
+              ...item,
+              colour: item.colour.code // ensure it's a string
+            })
+          );
+          this.updateListItems(listIndex, todoItems);
+        }
+      },
+      error: err => console.error(err)
+    });
+  }
+
+  private updateListItems(listIndex: number, todoItems: TodoItemDto[]) {
+    const updatedList = new TodoListDto({
+      ...this.lists[listIndex],
+      items: [...todoItems]
+    });
+
+    // Replace the to-do lists
+    this.lists = [
+      ...this.lists.slice(0, listIndex),
+      updatedList,
+      ...this.lists.slice(listIndex + 1)
+    ];
+
+     this.selectedList = updatedList;
+  }
+
+
   stopDeleteCountDown() {
     clearInterval(this.deleteCountDownInterval);
     this.deleteCountDown = 0;
     this.deleting = false;
   }
+  addTagFn = (name: string) => {
+    const tag = new TagDto();
+    tag.name = name;
+    return tag;
+  };
 }

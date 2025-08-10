@@ -2,6 +2,11 @@
 
 public class TodoItem : BaseAuditableEntity
 {
+    public TodoItem()
+    {
+        Tags = new HashSet<Tag>();
+    }   
+
     public int ListId { get; set; }
 
     public string? Title { get; set; }
@@ -30,4 +35,6 @@ public class TodoItem : BaseAuditableEntity
     }
 
     public TodoList List { get; set; } = null!;
+    public virtual ICollection<Tag> Tags { get; set; }
+
 }
