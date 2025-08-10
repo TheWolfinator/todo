@@ -39,6 +39,29 @@
               "format": "int32"
             },
             "x-position": 3
+          },
+          {
+            "name": "Tags",
+            "in": "query",
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "array",
+              "nullable": true,
+              "items": {
+                "type": "string"
+              }
+            },
+            "x-position": 4
+          },
+          {
+            "name": "Title",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 5
           }
         ],
         "responses": {
@@ -436,10 +459,213 @@
             "type": "string",
             "nullable": true
           },
+          "colour": {
+            "$ref": "#/components/schemas/Colour"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "priority": {
+            "$ref": "#/components/schemas/PriorityLevel"
+          },
           "done": {
             "type": "boolean"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tag"
+            }
           }
         }
+      },
+      "Colour": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ValueObject"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "ValueObject": {
+        "type": "object",
+        "x-abstract": true,
+        "additionalProperties": false
+      },
+      "PriorityLevel": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "None",
+          "Low",
+          "Medium",
+          "High"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ]
+      },
+      "Tag": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseAuditableEntity"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "todoItemId": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "todoItem": {
+                "$ref": "#/components/schemas/TodoItem"
+              }
+            }
+          }
+        ]
+      },
+      "TodoItem": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseAuditableEntity"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "listId": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "title": {
+                "type": "string",
+                "nullable": true
+              },
+              "note": {
+                "type": "string",
+                "nullable": true
+              },
+              "colour": {
+                "$ref": "#/components/schemas/Colour"
+              },
+              "priority": {
+                "$ref": "#/components/schemas/PriorityLevel"
+              },
+              "reminder": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              },
+              "done": {
+                "type": "boolean"
+              },
+              "list": {
+                "$ref": "#/components/schemas/TodoList"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Tag"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "TodoList": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseAuditableEntity"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "title": {
+                "type": "string",
+                "nullable": true
+              },
+              "colour": {
+                "$ref": "#/components/schemas/Colour"
+              },
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TodoItem"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "BaseAuditableEntity": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseEntity"
+          },
+          {
+            "type": "object",
+            "x-abstract": true,
+            "additionalProperties": false,
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "createdBy": {
+                "type": "string",
+                "nullable": true
+              },
+              "lastModified": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              },
+              "lastModifiedBy": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          }
+        ]
+      },
+      "BaseEntity": {
+        "type": "object",
+        "x-abstract": true,
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "domainEvents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BaseEvent"
+            }
+          }
+        }
+      },
+      "BaseEvent": {
+        "type": "object",
+        "x-abstract": true,
+        "additionalProperties": false
       },
       "CreateTodoItemCommand": {
         "type": "object",
@@ -490,24 +716,18 @@
           "note": {
             "type": "string",
             "nullable": true
+          },
+          "colour": {
+            "type": "string",
+            "nullable": true
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tag"
+            }
           }
         }
-      },
-      "PriorityLevel": {
-        "type": "integer",
-        "description": "",
-        "x-enumNames": [
-          "None",
-          "Low",
-          "Medium",
-          "High"
-        ],
-        "enum": [
-          0,
-          1,
-          2,
-          3
-        ]
       },
       "TodosVm": {
         "type": "object",
@@ -523,6 +743,12 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/TodoListDto"
+            }
+          },
+          "supportedColours": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupportedColourDto"
             }
           }
         }
@@ -550,10 +776,6 @@
             "format": "int32"
           },
           "title": {
-            "type": "string",
-            "nullable": true
-          },
-          "colour": {
             "type": "string",
             "nullable": true
           },
@@ -591,6 +813,41 @@
           "note": {
             "type": "string",
             "nullable": true
+          },
+          "colour": {
+            "type": "string",
+            "nullable": true
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TagDto"
+            }
+          }
+        }
+      },
+      "TagDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "SupportedColourDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "hex": {
+            "type": "string"
           }
         }
       },

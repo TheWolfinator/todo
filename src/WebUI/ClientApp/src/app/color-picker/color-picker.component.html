@@ -1,0 +1,8 @@
+<div class="custom-select-wrapper">
+  <select class="form-control" [ngModel]="value" (ngModelChange)="handleChange($event)">
+    <option *ngFor="let color of colorOptions" [value]="color.hex">
+      {{ color.name }}
+    </option>
+  </select>
+  <span class="color-preview" [style.background]="value"></span>
+</div>

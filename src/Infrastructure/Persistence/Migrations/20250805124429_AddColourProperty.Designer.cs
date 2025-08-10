@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Todo_App.Infrastructure.Persistence;
 
@@ -11,9 +12,10 @@ using Todo_App.Infrastructure.Persistence;
 namespace Todo_App.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250805124429_AddColourProperty")]
+    partial class AddColourProperty
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -300,40 +302,6 @@ namespace Todo_App.Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("Todo_App.Domain.Entities.Tag", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
-
-                    b.Property<DateTime>("Created")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("LastModified")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("TodoItemId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TodoItemId");
-
-                    b.ToTable("Tags");
-                });
-
             modelBuilder.Entity("Todo_App.Domain.Entities.TodoItem", b =>
                 {
                     b.Property<int>("Id")
@@ -554,51 +522,6 @@ namespace Todo_App.Infrastructure.Persistence.Migrations
                         });
 
                     b.Navigation("Colour")
-                        .IsRequired();
-
-                    b.Navigation("List");
-                });
-
-            modelBuilder.Entity("Todo_App.Domain.Entities.TodoList", b =>
-                {
-                    b.OwnsOne("Todo_App.Domain.ValueObjects.Colour", "Colour", b1 =>
-                        {
-                            b1.Property<int>("TodoListId")
-                                .HasColumnType("int");
-
-                            b1.Property<string>("Code")
-                                .IsRequired()
-                                .HasColumnType("nvarchar(max)");
-
-                            b1.HasKey("TodoListId");
-
-                            b1.ToTable("TodoLists");
-
-                            b1.WithOwner()
-                                .HasForeignKey("TodoListId");
-                        });
-
-                    b.Navigation("Colour")
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Todo_App.Domain.Entities.Tag", b =>
-                {
-                    b.HasOne("Todo_App.Domain.Entities.TodoItem", "TodoItem")
-                        .WithMany()
-                        .HasForeignKey("TodoItemId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("TodoItem");
-                });
-
-            modelBuilder.Entity("Todo_App.Domain.Entities.TodoItem", b =>
-                {
-                    b.HasOne("Todo_App.Domain.Entities.TodoList", "List")
-                        .WithMany("Items")
-                        .HasForeignKey("ListId")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("List");

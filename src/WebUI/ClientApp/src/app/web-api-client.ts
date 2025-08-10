@@ -16,7 +16,7 @@ import { HttpClient, HttpHeaders, HttpResponse, HttpResponseBase } from '@angula
 export const API_BASE_URL = new InjectionToken<string>('API_BASE_URL');
 
 export interface ITodoItemsClient {
-    getTodoItemsWithPagination(listId: number | undefined, pageNumber: number | undefined, pageSize: number | undefined): Observable<PaginatedListOfTodoItemBriefDto>;
+    getTodoItemsWithPagination(listId: number | undefined, pageNumber: number | undefined, pageSize: number | undefined, tags: string[] | null | undefined, title: string | null | undefined): Observable<PaginatedListOfTodoItemBriefDto>;
     create(command: CreateTodoItemCommand): Observable<number>;
     update(id: number, command: UpdateTodoItemCommand): Observable<FileResponse>;
     delete(id: number): Observable<FileResponse>;
@@ -36,7 +36,7 @@ export class TodoItemsClient implements ITodoItemsClient {
         this.baseUrl = baseUrl !== undefined && baseUrl !== null ? baseUrl : "";
     }
 
-    getTodoItemsWithPagination(listId: number | undefined, pageNumber: number | undefined, pageSize: number | undefined): Observable<PaginatedListOfTodoItemBriefDto> {
+    getTodoItemsWithPagination(listId: number | undefined, pageNumber: number | undefined, pageSize: number | undefined, tags: string[] | null | undefined, title: string | null | undefined): Observable<PaginatedListOfTodoItemBriefDto> {
         let url_ = this.baseUrl + "/api/TodoItems?";
         if (listId === null)
             throw new Error("The parameter 'listId' cannot be null.");
@@ -50,6 +50,10 @@ export class TodoItemsClient implements ITodoItemsClient {
             throw new Error("The parameter 'pageSize' cannot be null.");
         else if (pageSize !== undefined)
             url_ += "PageSize=" + encodeURIComponent("" + pageSize) + "&";
+        if (tags !== undefined && tags !== null)
+            tags && tags.forEach(item => { url_ += "Tags=" + encodeURIComponent("" + item) + "&"; });
+        if (title !== undefined && title !== null)
+            url_ += "Title=" + encodeURIComponent("" + title) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -721,7 +725,11 @@ export class TodoItemBriefDto implements ITodoItemBriefDto {
     id?: number;
     listId?: number;
     title?: string | undefined;
+    colour?: Colour;
+    note?: string | undefined;
+    priority?: PriorityLevel;
     done?: boolean;
+    tags?: Tag[];
 
     constructor(data?: ITodoItemBriefDto) {
         if (data) {
@@ -737,7 +745,15 @@ export class TodoItemBriefDto implements ITodoItemBriefDto {
             this.id = _data["id"];
             this.listId = _data["listId"];
             this.title = _data["title"];
+            this.colour = _data["colour"] ? Colour.fromJS(_data["colour"]) : <any>undefined;
+            this.note = _data["note"];
+            this.priority = _data["priority"];
             this.done = _data["done"];
+            if (Array.isArray(_data["tags"])) {
+                this.tags = [] as any;
+                for (let item of _data["tags"])
+                    this.tags!.push(Tag.fromJS(item));
+            }
         }
     }
 
@@ -753,7 +769,15 @@ export class TodoItemBriefDto implements ITodoItemBriefDto {
         data["id"] = this.id;
         data["listId"] = this.listId;
         data["title"] = this.title;
+        data["colour"] = this.colour ? this.colour.toJSON() : <any>undefined;
+        data["note"] = this.note;
+        data["priority"] = this.priority;
         data["done"] = this.done;
+        if (Array.isArray(this.tags)) {
+            data["tags"] = [];
+            for (let item of this.tags)
+                data["tags"].push(item.toJSON());
+        }
         return data;
     }
 }
@@ -762,7 +786,359 @@ export interface ITodoItemBriefDto {
     id?: number;
     listId?: number;
     title?: string | undefined;
+    colour?: Colour;
+    note?: string | undefined;
+    priority?: PriorityLevel;
     done?: boolean;
+    tags?: Tag[];
+}
+
+export abstract class ValueObject implements IValueObject {
+
+    constructor(data?: IValueObject) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+    }
+
+    static fromJS(data: any): ValueObject {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'ValueObject' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        return data;
+    }
+}
+
+export interface IValueObject {
+}
+
+export class Colour extends ValueObject implements IColour {
+    code?: string;
+
+    constructor(data?: IColour) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.code = _data["code"];
+        }
+    }
+
+    static override fromJS(data: any): Colour {
+        data = typeof data === 'object' ? data : {};
+        let result = new Colour();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["code"] = this.code;
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IColour extends IValueObject {
+    code?: string;
+}
+
+export enum PriorityLevel {
+    None = 0,
+    Low = 1,
+    Medium = 2,
+    High = 3,
+}
+
+export abstract class BaseEntity implements IBaseEntity {
+    id?: number;
+    domainEvents?: BaseEvent[];
+
+    constructor(data?: IBaseEntity) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            if (Array.isArray(_data["domainEvents"])) {
+                this.domainEvents = [] as any;
+                for (let item of _data["domainEvents"])
+                    this.domainEvents!.push(BaseEvent.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): BaseEntity {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseEntity' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        if (Array.isArray(this.domainEvents)) {
+            data["domainEvents"] = [];
+            for (let item of this.domainEvents)
+                data["domainEvents"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IBaseEntity {
+    id?: number;
+    domainEvents?: BaseEvent[];
+}
+
+export abstract class BaseAuditableEntity extends BaseEntity implements IBaseAuditableEntity {
+    created?: Date;
+    createdBy?: string | undefined;
+    lastModified?: Date | undefined;
+    lastModifiedBy?: string | undefined;
+
+    constructor(data?: IBaseAuditableEntity) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.created = _data["created"] ? new Date(_data["created"].toString()) : <any>undefined;
+            this.createdBy = _data["createdBy"];
+            this.lastModified = _data["lastModified"] ? new Date(_data["lastModified"].toString()) : <any>undefined;
+            this.lastModifiedBy = _data["lastModifiedBy"];
+        }
+    }
+
+    static override fromJS(data: any): BaseAuditableEntity {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseAuditableEntity' cannot be instantiated.");
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["created"] = this.created ? this.created.toISOString() : <any>undefined;
+        data["createdBy"] = this.createdBy;
+        data["lastModified"] = this.lastModified ? this.lastModified.toISOString() : <any>undefined;
+        data["lastModifiedBy"] = this.lastModifiedBy;
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IBaseAuditableEntity extends IBaseEntity {
+    created?: Date;
+    createdBy?: string | undefined;
+    lastModified?: Date | undefined;
+    lastModifiedBy?: string | undefined;
+}
+
+export class Tag extends BaseAuditableEntity implements ITag {
+    name?: string;
+    todoItemId?: number;
+    todoItem?: TodoItem;
+
+    constructor(data?: ITag) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.name = _data["name"];
+            this.todoItemId = _data["todoItemId"];
+            this.todoItem = _data["todoItem"] ? TodoItem.fromJS(_data["todoItem"]) : <any>undefined;
+        }
+    }
+
+    static override fromJS(data: any): Tag {
+        data = typeof data === 'object' ? data : {};
+        let result = new Tag();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["todoItemId"] = this.todoItemId;
+        data["todoItem"] = this.todoItem ? this.todoItem.toJSON() : <any>undefined;
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface ITag extends IBaseAuditableEntity {
+    name?: string;
+    todoItemId?: number;
+    todoItem?: TodoItem;
+}
+
+export class TodoItem extends BaseAuditableEntity implements ITodoItem {
+    listId?: number;
+    title?: string | undefined;
+    note?: string | undefined;
+    colour?: Colour;
+    priority?: PriorityLevel;
+    reminder?: Date | undefined;
+    done?: boolean;
+    list?: TodoList;
+    tags?: Tag[];
+
+    constructor(data?: ITodoItem) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.listId = _data["listId"];
+            this.title = _data["title"];
+            this.note = _data["note"];
+            this.colour = _data["colour"] ? Colour.fromJS(_data["colour"]) : <any>undefined;
+            this.priority = _data["priority"];
+            this.reminder = _data["reminder"] ? new Date(_data["reminder"].toString()) : <any>undefined;
+            this.done = _data["done"];
+            this.list = _data["list"] ? TodoList.fromJS(_data["list"]) : <any>undefined;
+            if (Array.isArray(_data["tags"])) {
+                this.tags = [] as any;
+                for (let item of _data["tags"])
+                    this.tags!.push(Tag.fromJS(item));
+            }
+        }
+    }
+
+    static override fromJS(data: any): TodoItem {
+        data = typeof data === 'object' ? data : {};
+        let result = new TodoItem();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["listId"] = this.listId;
+        data["title"] = this.title;
+        data["note"] = this.note;
+        data["colour"] = this.colour ? this.colour.toJSON() : <any>undefined;
+        data["priority"] = this.priority;
+        data["reminder"] = this.reminder ? this.reminder.toISOString() : <any>undefined;
+        data["done"] = this.done;
+        data["list"] = this.list ? this.list.toJSON() : <any>undefined;
+        if (Array.isArray(this.tags)) {
+            data["tags"] = [];
+            for (let item of this.tags)
+                data["tags"].push(item.toJSON());
+        }
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface ITodoItem extends IBaseAuditableEntity {
+    listId?: number;
+    title?: string | undefined;
+    note?: string | undefined;
+    colour?: Colour;
+    priority?: PriorityLevel;
+    reminder?: Date | undefined;
+    done?: boolean;
+    list?: TodoList;
+    tags?: Tag[];
+}
+
+export class TodoList extends BaseAuditableEntity implements ITodoList {
+    title?: string | undefined;
+    colour?: Colour;
+    items?: TodoItem[];
+
+    constructor(data?: ITodoList) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.title = _data["title"];
+            this.colour = _data["colour"] ? Colour.fromJS(_data["colour"]) : <any>undefined;
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(TodoItem.fromJS(item));
+            }
+        }
+    }
+
+    static override fromJS(data: any): TodoList {
+        data = typeof data === 'object' ? data : {};
+        let result = new TodoList();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["title"] = this.title;
+        data["colour"] = this.colour ? this.colour.toJSON() : <any>undefined;
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item.toJSON());
+        }
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface ITodoList extends IBaseAuditableEntity {
+    title?: string | undefined;
+    colour?: Colour;
+    items?: TodoItem[];
+}
+
+export abstract class BaseEvent implements IBaseEvent {
+
+    constructor(data?: IBaseEvent) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+    }
+
+    static fromJS(data: any): BaseEvent {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseEvent' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        return data;
+    }
+}
+
+export interface IBaseEvent {
 }
 
 export class CreateTodoItemCommand implements ICreateTodoItemCommand {
@@ -854,6 +1230,8 @@ export class UpdateTodoItemDetailCommand implements IUpdateTodoItemDetailCommand
     listId?: number;
     priority?: PriorityLevel;
     note?: string | undefined;
+    colour?: string | undefined;
+    tags?: Tag[];
 
     constructor(data?: IUpdateTodoItemDetailCommand) {
         if (data) {
@@ -870,6 +1248,12 @@ export class UpdateTodoItemDetailCommand implements IUpdateTodoItemDetailCommand
             this.listId = _data["listId"];
             this.priority = _data["priority"];
             this.note = _data["note"];
+            this.colour = _data["colour"];
+            if (Array.isArray(_data["tags"])) {
+                this.tags = [] as any;
+                for (let item of _data["tags"])
+                    this.tags!.push(Tag.fromJS(item));
+            }
         }
     }
 
@@ -886,6 +1270,12 @@ export class UpdateTodoItemDetailCommand implements IUpdateTodoItemDetailCommand
         data["listId"] = this.listId;
         data["priority"] = this.priority;
         data["note"] = this.note;
+        data["colour"] = this.colour;
+        if (Array.isArray(this.tags)) {
+            data["tags"] = [];
+            for (let item of this.tags)
+                data["tags"].push(item.toJSON());
+        }
         return data;
     }
 }
@@ -895,18 +1285,14 @@ export interface IUpdateTodoItemDetailCommand {
     listId?: number;
     priority?: PriorityLevel;
     note?: string | undefined;
-}
-
-export enum PriorityLevel {
-    None = 0,
-    Low = 1,
-    Medium = 2,
-    High = 3,
+    colour?: string | undefined;
+    tags?: Tag[];
 }
 
 export class TodosVm implements ITodosVm {
     priorityLevels?: PriorityLevelDto[];
     lists?: TodoListDto[];
+    supportedColours?: SupportedColourDto[];
 
     constructor(data?: ITodosVm) {
         if (data) {
@@ -928,6 +1314,11 @@ export class TodosVm implements ITodosVm {
                 this.lists = [] as any;
                 for (let item of _data["lists"])
                     this.lists!.push(TodoListDto.fromJS(item));
+            }
+            if (Array.isArray(_data["supportedColours"])) {
+                this.supportedColours = [] as any;
+                for (let item of _data["supportedColours"])
+                    this.supportedColours!.push(SupportedColourDto.fromJS(item));
             }
         }
     }
@@ -951,6 +1342,11 @@ export class TodosVm implements ITodosVm {
             for (let item of this.lists)
                 data["lists"].push(item.toJSON());
         }
+        if (Array.isArray(this.supportedColours)) {
+            data["supportedColours"] = [];
+            for (let item of this.supportedColours)
+                data["supportedColours"].push(item.toJSON());
+        }
         return data;
     }
 }
@@ -958,6 +1354,7 @@ export class TodosVm implements ITodosVm {
 export interface ITodosVm {
     priorityLevels?: PriorityLevelDto[];
     lists?: TodoListDto[];
+    supportedColours?: SupportedColourDto[];
 }
 
 export class PriorityLevelDto implements IPriorityLevelDto {
@@ -1003,7 +1400,6 @@ export interface IPriorityLevelDto {
 export class TodoListDto implements ITodoListDto {
     id?: number;
     title?: string | undefined;
-    colour?: string | undefined;
     items?: TodoItemDto[];
 
     constructor(data?: ITodoListDto) {
@@ -1019,7 +1415,6 @@ export class TodoListDto implements ITodoListDto {
         if (_data) {
             this.id = _data["id"];
             this.title = _data["title"];
-            this.colour = _data["colour"];
             if (Array.isArray(_data["items"])) {
                 this.items = [] as any;
                 for (let item of _data["items"])
@@ -1039,7 +1434,6 @@ export class TodoListDto implements ITodoListDto {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
         data["title"] = this.title;
-        data["colour"] = this.colour;
         if (Array.isArray(this.items)) {
             data["items"] = [];
             for (let item of this.items)
@@ -1052,7 +1446,6 @@ export class TodoListDto implements ITodoListDto {
 export interface ITodoListDto {
     id?: number;
     title?: string | undefined;
-    colour?: string | undefined;
     items?: TodoItemDto[];
 }
 
@@ -1063,6 +1456,8 @@ export class TodoItemDto implements ITodoItemDto {
     done?: boolean;
     priority?: number;
     note?: string | undefined;
+    colour?: string | undefined;
+    tags?: TagDto[];
 
     constructor(data?: ITodoItemDto) {
         if (data) {
@@ -1081,6 +1476,12 @@ export class TodoItemDto implements ITodoItemDto {
             this.done = _data["done"];
             this.priority = _data["priority"];
             this.note = _data["note"];
+            this.colour = _data["colour"];
+            if (Array.isArray(_data["tags"])) {
+                this.tags = [] as any;
+                for (let item of _data["tags"])
+                    this.tags!.push(TagDto.fromJS(item));
+            }
         }
     }
 
@@ -1099,6 +1500,12 @@ export class TodoItemDto implements ITodoItemDto {
         data["done"] = this.done;
         data["priority"] = this.priority;
         data["note"] = this.note;
+        data["colour"] = this.colour;
+        if (Array.isArray(this.tags)) {
+            data["tags"] = [];
+            for (let item of this.tags)
+                data["tags"].push(item.toJSON());
+        }
         return data;
     }
 }
@@ -1110,6 +1517,88 @@ export interface ITodoItemDto {
     done?: boolean;
     priority?: number;
     note?: string | undefined;
+    colour?: string | undefined;
+    tags?: TagDto[];
+}
+
+export class TagDto implements ITagDto {
+    id?: number;
+    name?: string;
+
+    constructor(data?: ITagDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+        }
+    }
+
+    static fromJS(data: any): TagDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new TagDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        return data;
+    }
+}
+
+export interface ITagDto {
+    id?: number;
+    name?: string;
+}
+
+export class SupportedColourDto implements ISupportedColourDto {
+    name?: string;
+    hex?: string;
+
+    constructor(data?: ISupportedColourDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.hex = _data["hex"];
+        }
+    }
+
+    static fromJS(data: any): SupportedColourDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new SupportedColourDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["hex"] = this.hex;
+        return data;
+    }
+}
+
+export interface ISupportedColourDto {
+    name?: string;
+    hex?: string;
 }
 
 export class CreateTodoListCommand implements ICreateTodoListCommand {
