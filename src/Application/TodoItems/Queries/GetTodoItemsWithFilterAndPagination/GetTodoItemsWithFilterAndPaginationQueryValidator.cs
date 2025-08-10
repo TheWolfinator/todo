@@ -1,10 +1,10 @@
 ﻿using FluentValidation;
 
-namespace Todo_App.Application.TodoItems.Queries.GetTodoItemsWithPagination;
+namespace Todo_App.Application.TodoItems.Queries.GetTodoItemsWithFilterAndPagination;
 
-public class GetTodoItemsWithPaginationQueryValidator : AbstractValidator<GetTodoItemsWithPaginationQuery>
+public class GetTodoItemsWithFilterAndPaginationQueryValidator : AbstractValidator<GetTodoItemsWithFilterAndPaginationQuery>
 {
-    public GetTodoItemsWithPaginationQueryValidator()
+    public GetTodoItemsWithFilterAndPaginationQueryValidator()
     {
         RuleFor(x => x.ListId)
             .NotEmpty().WithMessage("ListId is required.");

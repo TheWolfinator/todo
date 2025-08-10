@@ -13,6 +13,11 @@ public class TodoItemConfiguration : IEntityTypeConfiguration<TodoItem>
             .IsRequired();
 
         builder.Property(t => t.Note)
-            .HasMaxLength(2);
+            .HasMaxLength(1000);
+
+        builder
+            .OwnsOne(b => b.Colour);
+        //soft delete filter
+        builder.HasQueryFilter(td => !td.IsDeleted);
     }
 }

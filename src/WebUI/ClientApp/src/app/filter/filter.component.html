@@ -1,0 +1,30 @@
+<accordion class="mb-3">
+  <accordion-group heading="Filters">
+
+    <!-- Filter by Tag -->
+    <div class="mb-3">
+      <label for="filterTag" class="form-label">Filter by Tag</label>
+      <ng-select id="filterTag"
+                 [items]="tagSuggestions"
+                 bindLabel="name"
+                 bindValue="name"
+                 [multiple]="true"
+                 [(ngModel)]="selectedTags">
+      </ng-select>
+    </div>
+
+    <!-- Filter by Title -->
+    <div class="mb-3">
+      <label for="filterTitle" class="form-label">Filter by Title</label>
+      <input type="text"
+             id="filterTitle"
+             class="form-control"
+             [(ngModel)]="title" />
+    </div>
+
+    <!-- Buttons -->
+    <button class="btn btn-primary me-2" (click)="applyFilter()">Apply Filter</button>
+    <button class="btn btn-secondary" (click)="clearFilter()">Clear Filter</button>
+
+  </accordion-group>
+</accordion>
