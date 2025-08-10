@@ -2,6 +2,8 @@
 
 public class Colour : ValueObject
 {
+    public static readonly Colour Instance = new Colour();
+
     static Colour()
     {
     }

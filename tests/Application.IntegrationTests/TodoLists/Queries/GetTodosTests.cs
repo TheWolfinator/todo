@@ -60,4 +60,16 @@ public class GetTodosTests : BaseTestFixture
 
         await action.Should().NotThrowAsync<UnauthorizedAccessException>();
     }
+
+    [Test]
+    public async Task ShouldReturnSupportedColours()
+    {
+        await RunAsDefaultUserAsync();
+
+        var query = new GetTodosQuery();
+
+        var result = await SendAsync(query);
+
+        result.SupportedColours.Should().NotBeEmpty();
+    }
 }

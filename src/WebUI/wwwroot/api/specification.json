@@ -490,6 +490,10 @@
           "note": {
             "type": "string",
             "nullable": true
+          },
+          "colour": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -524,6 +528,12 @@
             "items": {
               "$ref": "#/components/schemas/TodoListDto"
             }
+          },
+          "supportedColours": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupportedColourDto"
+            }
           }
         }
       },
@@ -550,10 +560,6 @@
             "format": "int32"
           },
           "title": {
-            "type": "string",
-            "nullable": true
-          },
-          "colour": {
             "type": "string",
             "nullable": true
           },
@@ -591,6 +597,22 @@
           "note": {
             "type": "string",
             "nullable": true
+          },
+          "colour": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "SupportedColourDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "hex": {
+            "type": "string"
           }
         }
       },
