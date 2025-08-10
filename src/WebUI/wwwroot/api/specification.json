@@ -583,6 +583,9 @@
                 "items": {
                   "$ref": "#/components/schemas/Tag"
                 }
+              },
+              "isDeleted": {
+                "type": "boolean"
               }
             }
           }
@@ -609,6 +612,9 @@
                 "items": {
                   "$ref": "#/components/schemas/TodoItem"
                 }
+              },
+              "isDeleted": {
+                "type": "boolean"
               }
             }
           }

@@ -14,5 +14,8 @@ public class TodoListConfiguration : IEntityTypeConfiguration<TodoList>
 
         builder
             .OwnsOne(b => b.Colour);
+
+        //soft delete filter
+        builder.HasQueryFilter(td => !td.IsDeleted);
     }
 }

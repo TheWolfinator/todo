@@ -37,4 +37,5 @@ public class TodoItem : BaseAuditableEntity
     public TodoList List { get; set; } = null!;
     public virtual ICollection<Tag> Tags { get; set; }
 
+    public bool IsDeleted { get; set; } = false;
 }
